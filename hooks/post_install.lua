@@ -54,12 +54,14 @@ function PLUGIN:PostInstall(ctx)
         -- out to curl/wget. The shell approach is unreliable on Windows: under
         -- mise's sanitized os.execute environment curl/wget are not guaranteed
         -- to be on PATH, and with stderr redirected the real error is lost.
-        -- http.download_file uses mise's own client (with retry) and returns
-        -- err (nil on success). It must be called directly: it is an async
-        -- host function, and wrapping it in pcall fails with "attempt to
-        -- yield across a metamethod/C-call boundary".
+        -- http.try_download_file uses mise's own client (with retry) and returns
+        -- err (nil on success). Unlike download_file it reports failure
+        -- as a return value instead of raising, so we can add the URL to the
+        -- message. It must be called directly: it is an async host function,
+        -- and wrapping it in pcall fails with "attempt to yield across a
+        -- metamethod/C-call boundary".
         local yarn_js_file = file.join_path(bin_dir, "yarn.js")
-        local err = http.download_file({ url = yarn_url, headers = {} }, yarn_js_file)
+        local _, err = http.try_download_file({ url = yarn_url, headers = {} }, yarn_js_file)
         if err ~= nil then
             error("Failed to download Yarn v2+ from " .. yarn_url .. ": " .. tostring(err))
         end
